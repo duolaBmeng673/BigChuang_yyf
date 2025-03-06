@@ -21,7 +21,7 @@ public class JDBCUtils {
         Connection  conn = null;
         try {
 //            conn= DriverManager.getConnection("jdbc:mysql://192.168.2.230:3306/test","rjw_user","20050318Az");
-            conn = DriverManager.getConnection("jdbc:mysql://192.168.0.106:3306/test?useSSL=false", "root", "123456");
+            conn = DriverManager.getConnection("jdbc:mysql://10.68.146.0:3306/test?useSSL=false", "root", "123456");
 
             System.out.println("Database connection established: " + conn);
         }catch (Exception exception){

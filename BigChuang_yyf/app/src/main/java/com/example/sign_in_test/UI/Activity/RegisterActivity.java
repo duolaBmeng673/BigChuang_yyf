@@ -1,4 +1,4 @@
-package com.example.sign_in_test;
+package com.example.sign_in_test.UI.Activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,8 +10,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.sign_in_test.dao.UserDao;
-import com.example.sign_in_test.entity.User;
+import com.example.sign_in_test.Data.dao.UserDao;
+import com.example.sign_in_test.Data.model.User;
+import com.example.sign_in_test.R;
 
 import java.lang.ref.WeakReference;
 

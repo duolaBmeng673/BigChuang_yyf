@@ -1,4 +1,4 @@
-package com.example.sign_in_test.entity;
+package com.example.sign_in_test.Data.model;
 
 
 public class User {

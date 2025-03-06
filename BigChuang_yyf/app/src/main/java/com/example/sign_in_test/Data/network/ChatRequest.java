@@ -1,4 +1,4 @@
-package com.example.sign_in_test;
+package com.example.sign_in_test.Data.network;
 public class ChatRequest {
     private String message;
 

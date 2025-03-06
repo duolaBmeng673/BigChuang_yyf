@@ -1,4 +1,4 @@
-package com.example.sign_in_test;
+package com.example.sign_in_test.UI.Adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
+
+import com.example.sign_in_test.Data.model.Msg;
+import com.example.sign_in_test.R;
 
 public class MsgAdapter extends RecyclerView.Adapter<MsgAdapter.ViewHolder>{
 

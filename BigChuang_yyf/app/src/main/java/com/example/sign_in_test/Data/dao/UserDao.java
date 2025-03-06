@@ -1,7 +1,7 @@
-package com.example.sign_in_test.dao;
+package com.example.sign_in_test.Data.dao;
 
 
-import com.example.sign_in_test.entity.User;
+import com.example.sign_in_test.Data.model.User;
 import com.example.sign_in_test.utils.JDBCUtils;
 
 import java.sql.Connection;
@@ -101,6 +101,8 @@ public class UserDao {
 
         return user;
     }
+
+
 
 
 }

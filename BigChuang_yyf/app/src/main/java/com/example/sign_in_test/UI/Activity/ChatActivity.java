@@ -1,4 +1,4 @@
-package com.example.sign_in_test;
+package com.example.sign_in_test.UI.Activity;
 
 import android.os.Bundle;
 import android.view.View;
@@ -12,6 +12,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import com.example.sign_in_test.Data.network.ChatRequest;
+import com.example.sign_in_test.Data.network.ChatResponse;
+import com.example.sign_in_test.Data.network.ChatService;
+import com.example.sign_in_test.Data.model.Msg;
+import com.example.sign_in_test.UI.Adapter.MsgAdapter;
+import com.example.sign_in_test.R;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
@@ -103,9 +110,9 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private List<Msg> getData() {
-        List<Msg> list = new ArrayList<>();
-        list.add(new Msg("Hello", Msg.TYPE_RECEIVED));  // 初始消息
-        return list;
-    }
+//    private List<Msg> getData() {
+//        List<Msg> list = new ArrayList<>();
+//        list.add(new Msg("Hello", Msg.TYPE_RECEIVED));  // 初始消息
+//        return list;
+//    }
 }
