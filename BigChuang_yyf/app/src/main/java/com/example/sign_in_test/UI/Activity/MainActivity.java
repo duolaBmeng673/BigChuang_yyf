@@ -45,9 +45,13 @@ public class MainActivity extends AppCompatActivity {
         final String password = editTextPassword.getText().toString();
 
         new Thread(() -> {
+            int userId = -1;
             UserDao userDao = new UserDao();
             boolean success = userDao.login(name, password);
-            hand1.sendEmptyMessage(success ? 1 : 0);
+            if(success){
+                userId = userDao.findUser(name).getId();
+            }
+            hand1.sendEmptyMessage(userId);
         }).start();
     }
 
@@ -64,12 +68,14 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             MainActivity activity = mActivity.get();
             if (activity != null && !activity.isFinishing()) {
-                String message = msg.what == 1 ? "登录成功" : "登录失败";
+                String message = msg.what != -1 ? "登录成功" : "登录失败";
                 Toast.makeText(activity.getApplicationContext(), message, Toast.LENGTH_LONG).show();
 
-                if (msg.what == 1) {
+                if (msg.what != -1) {
                     // 登录成功后进入 ChatActivity
+
                     Intent intent = new Intent(activity, ChatActivity.class);
+                    intent.putExtra("user_id",msg.what);
                     activity.startActivity(intent);
                     activity.finish(); // 可选：关闭当前的 MainActivity
                 }

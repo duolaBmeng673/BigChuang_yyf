@@ -5,6 +5,8 @@ public class Msg {
     public static final int TYPE_SEND = 1;
 
     private int id;
+    private int user_id;
+    private int conversation_id;
     private String content;
     private int type;
 
@@ -14,6 +16,10 @@ public class Msg {
     }
 
     public int getId() { return id; }
+
+    public int getUser_id() { return user_id; }
+
+    public int getConversation_id() { return conversation_id; }
 
     public String getContent() {
         return content;
