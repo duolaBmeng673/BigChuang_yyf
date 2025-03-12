@@ -1,6 +1,8 @@
 package com.example.sign_in_test.UI.Activity;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.view.View;
 import android.widget.Button;
@@ -45,26 +47,13 @@ public class ChatActivity extends AppCompatActivity {
     private Retrofit retrofit;
     private ChatService chatService;
 
+    private int userId;
+    private int conversationId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-
-        int userId = getIntent().getIntExtra("user_id", -1); // 获取 user_id
-
-        msgdao = new MsgDao();
-        int conversationId = msgdao.createNewConversationId();
-
-        new Thread(() -> {
-
-            List<Msg> messages = msgdao.getMsgsByConversation(userId, conversationId);
-
-            runOnUiThread(() -> {
-                msgList.addAll(messages);
-                adapter.notifyDataSetChanged(); // 更新 UI
-            });
-        }).start();
-
 
         // 初始化 RecyclerView 和输入框
         msgRecyclerView = findViewById(R.id.msg_recycler_view);
@@ -75,6 +64,28 @@ public class ChatActivity extends AppCompatActivity {
 
         msgRecyclerView.setLayoutManager(layoutManager);
         msgRecyclerView.setAdapter(adapter);
+
+        userId = getIntent().getIntExtra("user_id", -1); // 获取 user_id
+        System.out.println(userId);
+
+        msgdao = new MsgDao();
+
+
+        new Thread(() -> {
+            conversationId = msgdao.getOrCreateConversationId(userId);
+            System.out.println(conversationId);
+            List<Msg> messages = msgdao.getMsgsByConversation(userId, conversationId);
+            System.out.println(messages.size());
+
+            runOnUiThread(() -> {
+                msgList.addAll(messages);
+                adapter.notifyItemInserted(msgList.size() - 1);
+                msgRecyclerView.scrollToPosition(msgList.size() - 1); // 更新 UI
+            });
+        }).start();
+
+
+
 
         // 创建 OkHttpClient，设置超时时间
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
@@ -98,13 +109,15 @@ public class ChatActivity extends AppCompatActivity {
                 String content = inputText.getText().toString();
                 if (!content.equals("")) {
                     // 显示用户消息
-                    Msg msg =new Msg(content, Msg.TYPE_SEND);
-                    msgdao.addMsg(msg);
+                    Msg msg =new Msg(content, Msg.TYPE_SEND,userId,conversationId);
+                    new Thread(() -> msgdao.addMsg(msg)).start();
 
                     msgList.add(msg);
                     adapter.notifyItemInserted(msgList.size() - 1);
                     msgRecyclerView.scrollToPosition(msgList.size() - 1);
                     inputText.setText("");  // 清空输入框
+
+
 
                     // 创建请求对象
                     ChatRequest request = new ChatRequest(content);
@@ -117,11 +130,16 @@ public class ChatActivity extends AppCompatActivity {
                                 // 获取后端返回的响应
                                 String botReply = response.body().getResponse();
                                 // 显示后端模型的回复
-                                Msg msg1 = new Msg(botReply, Msg.TYPE_RECEIVED);
-                                msgdao.addMsg(msg1);
-                                msgList.add(msg1);
-                                adapter.notifyItemInserted(msgList.size() - 1);
-                                msgRecyclerView.scrollToPosition(msgList.size() - 1);
+                                Msg msg1 = new Msg(botReply, Msg.TYPE_RECEIVED,userId,conversationId);
+
+                                new Thread(() -> msgdao.addMsg(msg1)).start();
+
+                                new Handler(Looper.getMainLooper()).post(() -> {
+                                    msgList.add(msg1);
+                                    adapter.notifyItemInserted(msgList.size() - 1);
+                                    msgRecyclerView.scrollToPosition(msgList.size() - 1);
+                                });
+
                             }
                         }
 

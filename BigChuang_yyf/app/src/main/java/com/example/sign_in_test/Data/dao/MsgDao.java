@@ -4,10 +4,15 @@ import android.util.Log;
 
 import com.example.sign_in_test.Data.model.Msg;
 import com.example.sign_in_test.utils.JDBCUtils;
+import com.google.gson.Gson;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class MsgDao {
 
@@ -19,8 +24,10 @@ public class MsgDao {
         return conversationId;
     }
     private int getActiveConversationId(int userId) {
-        String sql = "SELECT conversation_id FROM conversations WHERE user_id = ?";
-        try (Connection conn = JDBCUtils.getConn();
+        String sql = "SELECT conversation_id FROM chat_history_ai WHERE user_id = ?";
+
+
+        try ( Connection conn = JDBCUtils.getConn();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, userId);
             ResultSet rs = pstmt.executeQuery();
@@ -40,16 +47,21 @@ public class MsgDao {
 
     // 插入消息
     public boolean addMsg(Msg msg) {
-        String sql = "INSERT INTO chat_history_ai (user_id, conversation_id, message) VALUES (?, ?, ?)";
-        try (Connection conn = JDBCUtils.getConn();  // 将 Connection 包裹在 try-with-resources 中
+
+        Gson gson = new Gson();
+        String jsonMessage = gson.toJson(msg);
+        System.out.println(jsonMessage);
+        String sql = "INSERT INTO chat_history_ai (user_id, conversation_id, message,type) VALUES (?, ?, ?,?)";
+
+
+        try (Connection conn = JDBCUtils.getConn();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            if (conn == null) {
-                System.out.println("Connection is null");
-                return false;
-            }
-            pstmt.setInt(1, msg.getId());
+
+            pstmt.setInt(1, msg.getUser_id());
             pstmt.setInt(2, msg.getConversation_id());
             pstmt.setString(3, msg.getContent());
+            pstmt.setInt(4,msg.getType());
+            System.out.println("insert successfully");
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException e) {
@@ -61,19 +73,21 @@ public class MsgDao {
     // 根据 conversationId 获取消息列表
     public List<Msg> getMsgsByConversation(int userId, int conversationId) {
         List<Msg> msgList = new ArrayList<>();
-        String sql = "SELECT * FROM chat_history_ai WHERE user_id=? AND conversation_id=? ORDER BY timestamp ASC";
+        String sql = "SELECT * FROM chat_history_ai WHERE user_id=? AND conversation_id=? ";
+
+
         try (Connection conn = JDBCUtils.getConn();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            if(conn == null){
-                System.out.println("connection is null1");
-            }
+
             pstmt.setInt(1, userId);
             pstmt.setInt(2, conversationId);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 msgList.add(new Msg(
-                        rs.getString("content"),
-                        rs.getInt("type")
+                        rs.getString("message"),
+                        rs.getInt("type"),
+                        userId,
+                        conversationId
                 ));
             }
         } catch (SQLException e) {
