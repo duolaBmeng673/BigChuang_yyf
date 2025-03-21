@@ -26,6 +26,11 @@
             android:textAllCaps="false"
             android:maxLines="2"
             android:gravity="left"/>
+        <Button
+            android:id="@+id/picture_add"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"/>
 
         <Button
             android:id="@+id/send"
@@ -34,6 +39,17 @@
             android:text="Send"
             android:textAllCaps="false"
             android:textSize="20sp"/>
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/img_preview"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"/>
     </LinearLayout>
 
 </LinearLayout>

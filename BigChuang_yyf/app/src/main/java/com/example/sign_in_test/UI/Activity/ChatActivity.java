@@ -1,13 +1,21 @@
 package com.example.sign_in_test.UI.Activity;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,6 +42,8 @@ import retrofit2.Response;
 
 public class ChatActivity extends AppCompatActivity {
 
+    private ActivityResultLauncher<Intent> galleryLauncher;
+    private static final int PICK_IMAGE_REQUEST = 1;
     private static final String TAG = "ChatActivity";
     private List<Msg> msgList = new ArrayList<>();
     private MsgDao msgdao;
@@ -41,6 +51,8 @@ public class ChatActivity extends AppCompatActivity {
     private RecyclerView msgRecyclerView;
     private EditText inputText;
     private Button send;
+    private Button imageselect;
+    private ImageView imageView;
     private LinearLayoutManager layoutManager;
     private MsgAdapter adapter;
 
@@ -59,8 +71,10 @@ public class ChatActivity extends AppCompatActivity {
         msgRecyclerView = findViewById(R.id.msg_recycler_view);
         inputText = findViewById(R.id.input_text);
         send = findViewById(R.id.send);
+        imageselect = findViewById(R.id.picture_add);
         layoutManager = new LinearLayoutManager(this);
         adapter = new MsgAdapter(msgList);
+
 
         msgRecyclerView.setLayoutManager(layoutManager);
         msgRecyclerView.setAdapter(adapter);
@@ -103,13 +117,36 @@ public class ChatActivity extends AppCompatActivity {
 
         chatService = retrofit.create(ChatService.class);
 
+        galleryLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    // Step 2: 处理返回结果
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Intent data = result.getData();
+                        if (data != null) {
+                            Uri selectedImage = data.getData();
+                            // 在这里处理图片Uri，比如显示到ImageView中
+                            handleImage(selectedImage);
+                        }
+                    }
+                }
+        );
+
+        imageselect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openGallery();
+
+            }
+        });
+
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String content = inputText.getText().toString();
                 if (!content.equals("")) {
                     // 显示用户消息
-                    Msg msg =new Msg(content, Msg.TYPE_SEND,userId,conversationId);
+                    Msg msg =new Msg(content,Msg.TYPE_SEND,userId,conversationId);
                     new Thread(() -> msgdao.addMsg(msg)).start();
 
                     msgList.add(msg);
@@ -152,6 +189,18 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void openGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        galleryLauncher.launch(intent);
+    }
+
+    private void handleImage(Uri imageUri) {
+
+        imageView = findViewById(R.id.img_preview);
+        imageView.setImageURI(imageUri);
+        imageView.setVisibility(View.VISIBLE);
     }
 
 //    private List<Msg> getData() {
