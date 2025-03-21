@@ -6,6 +6,7 @@ import com.example.sign_in_test.Data.model.Msg;
 import com.example.sign_in_test.utils.JDBCUtils;
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,10 +49,19 @@ public class MsgDao {
     // 插入消息
     public boolean addMsg(Msg msg) {
 
+        String imageUrl = null;
+        if(msg.getData_type() == Msg.TYPE_IMAGE){
+            imageUrl = uploadImage(msg.getImage());
+            if (imageUrl == null){
+                System.out.println("Image upload failed.");
+                return false;
+            }
+        }
+
         Gson gson = new Gson();
         String jsonMessage = gson.toJson(msg);
         System.out.println(jsonMessage);
-        String sql = "INSERT INTO chat_history_ai (user_id, conversation_id, message,type) VALUES (?, ?, ?,?)";
+        String sql = "INSERT INTO chat_history_ai (user_id, conversation_id, message,image_url,type) VALUES (?, ?, ?,?)";
 
 
         try (Connection conn = JDBCUtils.getConn();
@@ -60,7 +70,8 @@ public class MsgDao {
             pstmt.setInt(1, msg.getUser_id());
             pstmt.setInt(2, msg.getConversation_id());
             pstmt.setString(3, msg.getContent());
-            pstmt.setInt(4,msg.getType());
+            if(imageUrl != null){pstmt.setString(4, imageUrl);}
+            pstmt.setInt(5,msg.getType());
             System.out.println("insert successfully");
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
@@ -95,4 +106,13 @@ public class MsgDao {
         }
         return msgList;
     }
+    private String uploadImage(File imageFile) {
+        // 这里你需要调用上传图片的代码，通常是通过 HTTP 请求上传图片到服务器，
+        // 然后从服务器返回图片的 URL 地址。
+
+        // 假设上传成功并获得图片 URL
+        String imageUrl = "E:/Dachuangshujuku/picture" + imageFile.getName();
+        return imageUrl;
+    }
 }
+
