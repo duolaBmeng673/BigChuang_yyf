@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
 import torch
+from PIL import Image
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import os
 
 app = Flask(__name__)
 
@@ -69,8 +72,50 @@ def chat():
         # 处理过长上下文：删除最早的两轮对话
         if "exceeds maximum" in str(e):
             conversation_history = conversation_history[2:]
-            return jsonify({"response": "请再�?一�?"})
+            return jsonify({"response": "请再说一次"})
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/upload_image", methods=["POST"])
+def upload_image():
+    try:
+        # 获取上传的图片文件
+        file = request.files.get("image")
+        if file is None:
+            return jsonify({"error": "No image file provided"}), 400
+        
+        filename = secure_filename(file.filename)
+       
+
+        # # 读取图片
+        # image = Image.open(file.stream)
+
+        # # 图像预处理
+        # image_tensor = preprocess(image).unsqueeze(0)
+
+        # # # 将图像输入到图像模型中进行预测
+        # with torch.no_grad():
+        #    outputs = image_model(image_tensor)
+        
+        # # # 计算模型输出的类别
+        # # _, predicted_class = torch.max(outputs, 1)
+
+        # # 获取标签（例如 ImageNet 类别）
+        # # 你可以加载 ImageNet 的类标签来查看预测结果
+        # labels_url = 'https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json'
+        # import requests
+        # response = requests.get(labels_url)
+        # labels = response.json()
+
+        # class_id = predicted_class.item()
+        # predicted_label = labels[str(class_id)][1]
+
+        # return jsonify({"predicted_class": predicted_label})
+        return "收到图片" + filename
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

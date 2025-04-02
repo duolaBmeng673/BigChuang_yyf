@@ -15,19 +15,20 @@ public class Msg {
     private String content;
     private int type;
     private String imageurl;
-    private File image;
+    private String imagebase64;
     private int Data_type;
 
 
-    public Msg(String content,int type,int user_id,int conversation_id){
+    public Msg(String content,int type,int user_id,int conversation_id,int Data_type){
         this.content = content;
         this.type = type;
         this.user_id = user_id;
         this.conversation_id = conversation_id;
+        this.Data_type = Data_type;
     }
 
-    public Msg(File image,int type,int user_id,int conversation_id){
-        this.image = image;
+    public Msg(String imagebase64,int type,int user_id,int conversation_id){
+        this.imagebase64 = imagebase64;
         this.type = type;
         this.user_id = user_id;
         this.conversation_id = conversation_id;
@@ -51,7 +52,7 @@ public class Msg {
 
     public int getData_type(){return Data_type;}
 
-    public File getImage(){return image;}
+    public String getImagebase64(){return imagebase64;}
 
 
     /*public void setId(int id) {
