@@ -20,12 +20,18 @@
             android:layout_margin="10dp"
             android:textColor="@color/black"/>
 
+        <ImageView
+            android:id="@+id/left_image"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:visibility="gone" />
+
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/right_layout"
         android:layout_width="wrap_content"
-        android:layout_height="77dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="right"
         android:background="@drawable/message_right"
         android:orientation="vertical">
@@ -37,6 +43,11 @@
             android:layout_gravity="center"
             android:layout_margin="10dp"
             android:textColor="@color/black" />
+        <ImageView
+            android:id="@+id/right_image"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:visibility="gone" />
 
     </LinearLayout>
 </LinearLayout>

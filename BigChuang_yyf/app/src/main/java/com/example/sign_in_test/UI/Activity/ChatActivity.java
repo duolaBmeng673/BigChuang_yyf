@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.sql.SQLOutput;
@@ -32,6 +33,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.example.sign_in_test.Data.dao.MsgDao;
 import com.example.sign_in_test.Data.dao.UserDao;
+import com.example.sign_in_test.Data.model.MsgContent;
+import com.example.sign_in_test.Data.model.MsgImage;
 import com.example.sign_in_test.Data.network.ChatRequest;
 import com.example.sign_in_test.Data.network.ChatResponse;
 import com.example.sign_in_test.Data.network.ChatService;
@@ -126,12 +129,13 @@ public class ChatActivity extends AppCompatActivity {
 
         // 初始化 Retrofit，使用自定义的 OkHttpClient
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://10.0.2.2:5000")  // 后端的地址，替换成你实际的地址
+                .baseUrl("http://10.0.2.2:5000/")  // 后端的地址，替换成你实际的地址
                 .client(okHttpClient)              // 设置 OkHttpClient
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         chatService = retrofit.create(ChatService.class);
+        imageService = retrofit.create(ImageService.class);
 
         galleryLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -164,7 +168,7 @@ public class ChatActivity extends AppCompatActivity {
 
                 if (!content.equals("") || imageuri == null) {
                     // 如果有图片或文本，构造消息对象
-                    Msg msg = new Msg(content, Msg.TYPE_SEND, userId, conversationId,Msg.TYPE_TEXT);
+                    Msg msg = new MsgContent(content, Msg.TYPE_SEND, userId, conversationId);
                     new Thread(() -> msgdao.addMsg(msg)).start();
 
                     msgList.add(msg);
@@ -183,8 +187,9 @@ public class ChatActivity extends AppCompatActivity {
                     // 1. 将 URI 转换为 File
                     String imagebase64 = convertImageToBase64(imageuri);
 
+
                     // 2. 创建 Msg 对象（第一个参数改为 File）
-                    Msg msg = new Msg(imagebase64, Msg.TYPE_SEND, userId, conversationId,Msg.TYPE_IMAGE);
+                    Msg msg = new MsgImage(imagebase64, Msg.TYPE_SEND, userId, conversationId);
 
                     // 3. 存入数据库
                     new Thread(() -> msgdao.addMsg(msg)).start();
@@ -229,7 +234,7 @@ public class ChatActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     // 获取后端返回的回复内容
                     String botReply = response.body().getResponse();
-                    Msg msg1 = new Msg(botReply, Msg.TYPE_RECEIVED, userId, conversationId);
+                    Msg msg1 = new MsgContent(botReply, Msg.TYPE_RECEIVED, userId, conversationId);
 
                     // 保存消息到数据库
                     new Thread(() -> msgdao.addMsg(msg1)).start();
@@ -253,6 +258,7 @@ public class ChatActivity extends AppCompatActivity {
     private void sendImageMessage(Uri imageUri) {
         // 1. 将图片转换为 Base64 编码
         String base64Image = convertImageToBase64(imageUri);
+        System.out.println(base64Image);
         if (base64Image == null) {
             return;
         }
@@ -269,7 +275,7 @@ public class ChatActivity extends AppCompatActivity {
                     String aiReply = response.body().toString();
 
                     // 4. 创建 AI 回复消息
-                    Msg msgReceived = new Msg(aiReply, Msg.TYPE_RECEIVED, userId, conversationId);
+                    Msg msgReceived = new MsgContent(aiReply, Msg.TYPE_RECEIVED, userId, conversationId);
 
                     // 5. 存入数据库
                     new Thread(() -> msgdao.addMsg(msgReceived)).start();
@@ -293,14 +299,17 @@ public class ChatActivity extends AppCompatActivity {
 
     private String convertImageToBase64(Uri imageUri) {
         try {
-            // 使用 ContentResolver 打开输入流
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             InputStream inputStream = getContentResolver().openInputStream(imageUri);
-            byte[] imageBytes = new byte[inputStream.available()];
-            inputStream.read(imageBytes);
+            byte[] buffer = new byte[4096];  // 4KB 缓冲区
+            int bytesRead;
+
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
             inputStream.close();
 
-            // 将字节数组编码为 Base64 字符串
-            return Base64.encodeToString(imageBytes, Base64.DEFAULT);
+            return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT);
         } catch (Exception e) {
             e.printStackTrace();
             return null;

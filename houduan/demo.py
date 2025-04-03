@@ -1,12 +1,18 @@
-from flask import Flask, request, jsonify
+import base64
+import datetime
+from flask import Flask, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 import torch
 from PIL import Image
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import os
 
-app = Flask(__name__)
+SAVE_DIR = "E:/Dachuangshujuku/picture"
+UPLOAD_FOLDER = "E:/Dachuangshujuku/picture"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # 确保文件夹存在
 
+app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # 加载模型和tokenizer
 model_path = "E:/Qwen/Qwen2.5-1.5B-Instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
@@ -79,12 +85,31 @@ def chat():
 @app.route("/upload_image", methods=["POST"])
 def upload_image():
     try:
-        # 获取上传的图片文件
-        file = request.files.get("image")
-        if file is None:
-            return jsonify({"error": "No image file provided"}), 400
-        
-        filename = secure_filename(file.filename)
+        # 解析 JSON 请求
+        data = request.get_json()
+        if not data or "imageBase64" not in data:
+            return jsonify({"error": "Missing imageBase64"}), 400
+
+        # 解析 Base64 图片
+        image_data = base64.b64decode(data["imageBase64"])
+
+        # 生成文件名（使用时间戳避免重复）
+        file_name = datetime.datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], file_name)
+
+        # 保存图片
+        with open(file_path, "wb") as f:
+            f.write(image_data)
+
+        # 生成可访问的 URL
+        file_url = f"http://127.0.0.1:5000/uploads/{file_name}"
+
+        return jsonify({"message": "Image uploaded successfully", "file_path": file_url}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
        
 
         # # 读取图片
@@ -111,10 +136,13 @@ def upload_image():
         # predicted_label = labels[str(class_id)][1]
 
         # return jsonify({"predicted_class": predicted_label})
-        return "收到图片" + filename
+        # return "收到图片" + filename
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # except Exception as e:
+    #     return jsonify({"error": str(e)}), 500
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 
 if __name__ == "__main__":
