@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -54,6 +55,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -160,58 +162,120 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
+//        send.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                String content = inputText.getText().toString(); // 获取输入框文本
+//                System.out.println(content);
+//
+//                if (!content.equals("") || imageuri == null) {
+//                    // 如果有图片或文本，构造消息对象
+//                    Msg msg = new MsgContent(content, Msg.TYPE_SEND, userId, conversationId);
+//                    new Thread(() -> msgdao.addMsg(msg)).start();
+//
+//                    msgList.add(msg);
+//                    adapter.notifyItemInserted(msgList.size() - 1);
+//                    msgRecyclerView.scrollToPosition(msgList.size() - 1);
+//                    inputText.setText(""); // 清空输入框
+//                    imageView.setVisibility(View.GONE); // 隐藏图片预览
+//                    imageView.setTag(null); // 清空保存的图片 URI
+//
+//
+//
+//                    sendTextMessage(content); // 发送文本消息
+//
+//                }
+//                if (imageuri != null) {
+//                    // 1. 将 URI 转换为 File
+//                    String imagebase64 = convertImageToBase64(imageuri);
+//
+//
+//                    // 2. 创建 Msg 对象（第一个参数改为 File）
+//                    Msg msg = new MsgImage(imagebase64, Msg.TYPE_SEND, userId, conversationId);
+//
+//                    // 3. 存入数据库
+//                    new Thread(() -> msgdao.addMsg(msg)).start();
+//
+//                    // 4. 更新 UI
+//                    msgList.add(msg);
+//                    adapter.notifyItemInserted(msgList.size() - 1);
+//                    msgRecyclerView.scrollToPosition(msgList.size() - 1);
+//                    inputText.setText(""); // 清空输入框
+//                    imageView.setVisibility(View.GONE); // 隐藏图片预览
+//                    imageView.setTag(null); // 清空保存的图片 URI
+//
+//                    // 5. 发送图片消息
+//                    sendImageMessage(imageuri);
+//                }
+//
+//            }
+//        });
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String content = inputText.getText().toString(); // 获取输入框文本
-                System.out.println(content);
+                String content = inputText.getText().toString().trim(); // 获取输入框文本并去除首尾空格
 
-                if (!content.equals("") || imageuri == null) {
-                    // 如果有图片或文本，构造消息对象
+                // 1. 如果输入框为空并且没有选择图片，直接提示用户
+                if (content.isEmpty() && imageuri == null) {
+                    Toast.makeText(ChatActivity.this, "请输入内容", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // 2. 如果文本不为空，先发送文本消息
+                if (!content.isEmpty()) {
                     Msg msg = new MsgContent(content, Msg.TYPE_SEND, userId, conversationId);
                     new Thread(() -> msgdao.addMsg(msg)).start();
 
                     msgList.add(msg);
                     adapter.notifyItemInserted(msgList.size() - 1);
                     msgRecyclerView.scrollToPosition(msgList.size() - 1);
-                    inputText.setText(""); // 清空输入框
-                    imageView.setVisibility(View.GONE); // 隐藏图片预览
-                    imageView.setTag(null); // 清空保存的图片 URI
 
+                    // 清空输入框
+                    inputText.setText("");
 
-
-                    sendTextMessage(content); // 发送文本消息
-
+                    // 发送到后端
+                    sendTextMessage(content);
                 }
+
+                // 3. 如果选择了图片，发送图片消息
                 if (imageuri != null) {
-                    // 1. 将 URI 转换为 File
                     String imagebase64 = convertImageToBase64(imageuri);
+                    if (imagebase64 != null) {
+                        // 构造消息对象
+                        Msg msg = new MsgImage(imagebase64, Msg.TYPE_SEND, userId, conversationId);
 
+                        // 存入数据库
+                        new Thread(() -> msgdao.addMsg(msg)).start();
 
-                    // 2. 创建 Msg 对象（第一个参数改为 File）
-                    Msg msg = new MsgImage(imagebase64, Msg.TYPE_SEND, userId, conversationId);
+                        // 更新 UI
+                        msgList.add(msg);
+                        adapter.notifyItemInserted(msgList.size() - 1);
+                        msgRecyclerView.scrollToPosition(msgList.size() - 1);
 
-                    // 3. 存入数据库
-                    new Thread(() -> msgdao.addMsg(msg)).start();
+                        // 隐藏预览并置空
+                        imageView.setVisibility(View.GONE);
+                        imageView.setTag(null);
+                        // 如果希望用户不能重复发送同一张图片，可以置空
+                        imageuri = null;
 
-                    // 4. 更新 UI
-                    msgList.add(msg);
-                    adapter.notifyItemInserted(msgList.size() - 1);
-                    msgRecyclerView.scrollToPosition(msgList.size() - 1);
-                    inputText.setText(""); // 清空输入框
-                    imageView.setVisibility(View.GONE); // 隐藏图片预览
-                    imageView.setTag(null); // 清空保存的图片 URI
-
-                    // 5. 发送图片消息
-                    sendImageMessage(imageuri);
+                        // 发送图片到后端
+                        sendImageMessage(imageuri);
+                    }
                 }
-
             }
         });
     }
 
+//    private void openGallery() {
+//        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//        galleryLauncher.launch(intent);
+//    }
     private void openGallery() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*"); // 允许所有文件类型
+        String[] mimeTypes = {"image/*"}; // 你可以根据需求修改类型，例如只允许图片
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         galleryLauncher.launch(intent);
     }
 
@@ -272,7 +336,7 @@ public class ChatActivity extends AppCompatActivity {
             public void onResponse(Call<ImageResponse> call, Response<ImageResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     // 服务器返回的图片 URL 和 AI 回复
-                    String aiReply = response.body().toString();
+                    String aiReply = response.body().getMessage();
 
                     // 4. 创建 AI 回复消息
                     Msg msgReceived = new MsgContent(aiReply, Msg.TYPE_RECEIVED, userId, conversationId);
